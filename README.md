@@ -2,18 +2,7 @@
 
 Herramienta educativa interactiva para la enseñanza de finanzas / economía a nivel universitario básico. Permite explorar de forma práctica los conceptos centrales del valor tiempo del dinero.
 
-**[Ver demo en vivo](https://TU-USUARIO.github.io/TU-REPO/)** ← reemplazar por tu usuario y el nombre del repo una vez publicado en GitHub Pages
-
-![Demo del simulador](demo.gif)
-<!--
-  Para grabar el GIF (ScreenToGif, Kap, LICEcap, o el grabador de pantalla del SO):
-  1. Abrir el sitio ya desplegado (no localhost, para que el link del README funcione igual si alguien lo clona).
-  2. Grabar una recorrida corta (15-20 seg) que muestre: cambiar de pestaña, cargar un ejemplo,
-     mover el slider de períodos/cuotas viendo el gráfico actualizarse en tiempo real, y pasar
-     el cursor sobre un tooltip (ⓘ).
-  3. Exportar como demo.gif (ancho recomendado ~800px para que no pese demasiado) y colocarlo
-     en la raíz del repo, junto a este README.
--->
+**[Ver demo en vivo]([https://TU-USUARIO.github.io/TU-REPO/](https://ikitay.github.io/simulador-vtd/))**
 
 ## Guía de uso para estudiantes
 
@@ -39,26 +28,6 @@ Cada pestaña incluye:
 ## Uso
 
 Es un único archivo HTML autocontenido (`index.html`), sin backend ni dependencias de instalación. La única dependencia externa es [Chart.js](https://www.chartjs.org/), cargada desde CDN.
-
-### Ver localmente
-
-Abrir `index.html` directamente en el navegador, o servirlo con cualquier servidor estático:
-
-```bash
-python3 -m http.server 8000
-```
-
-y visitar `http://localhost:8000`.
-
-### Desplegar en GitHub Pages
-
-1. Subir este repositorio a GitHub, con `index.html` en la raíz (como está en esta carpeta)
-2. En el repo: **Settings** → **Pages**
-3. En "Source", elegir **Deploy from a branch**
-4. Branch: `main`, carpeta: **/ (root)** → **Save**
-5. GitHub genera la URL en un par de minutos, con el formato `https://<usuario>.github.io/<repo>/`
-
-No hace falta ningún archivo de configuración adicional para Pages.
 
 ## Personalización
 
