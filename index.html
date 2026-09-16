@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Valor Tiempo del Dinero</title>
+<meta name="description" content="Herramienta educativa para aprender valor tiempo del dinero: interés simple y compuesto, anualidades, conversión de tasas y sistemas de amortización.">
+<style>
+  :root{
+    --bg:#f7f7f5;
+    --surface-0:#ffffff;
+    --surface-1:#f2f1ee;
+    --surface-2:#e9e8e4;
+    --border:#dedcd6;
+    --border-strong:#c9c7c0;
+    --text-primary:#1f1e1c;
+    --text-secondary:#5c5a55;
+    --text-muted:#8a8781;
+    --radius:8px;
+    --shadow-md:0 4px 14px rgba(0,0,0,0.08);
+    --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --accent:#b45309;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:24px 16px 60px;}
+  header{margin-bottom:20px;}
+  header h1{font-size:20px;margin:0 0 4px;}
+  header p{font-size:13px;color:var(--text-secondary);margin:0;}
+  .card{background:var(--surface-0);border:0.5px solid var(--border);border-radius:12px;padding:18px 16px;box-shadow:var(--shadow-md);}
+  input[type=number]{
+    padding:8px 10px;border:0.5px solid var(--border-strong);border-radius:var(--radius);
+    font-size:14px;background:var(--surface-0);color:var(--text-primary);
+  }
+  input[type=number]:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  input[type=range]{accent-color:var(--accent);}
+  label{display:block;margin-bottom:4px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  footer{text-align:center;font-size:11px;color:var(--text-muted);margin-top:24px;}
+
+  .tip{position:relative;display:inline-flex;align-items:center;cursor:help;margin-left:4px;}
+  .tip .tip-box{display:none;position:absolute;bottom:130%;left:0;background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:8px 10px;font-size:12px;color:var(--text-secondary);width:220px;z-index:10;line-height:1.4;box-shadow:var(--shadow-md);}
+  .tip:hover .tip-box, .tip:focus .tip-box{display:block;}
+  .tip i{font-style:normal;font-size:13px;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;}
+  .btn-sm{font-size:12px;padding:5px 10px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface-1);cursor:pointer;color:var(--text-primary);}
+  .btn-sm:hover{background:var(--surface-2);}
+  .ejemplos-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .warn-box{display:none;background:var(--surface-1);border:0.5px solid #e0a030;border-radius:var(--radius);padding:8px 10px;font-size:12px;color:var(--text-secondary);margin-bottom:12px;}
+  .explic{border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:12px;}
+  .explic summary{padding:8px 12px;font-size:13px;cursor:pointer;color:var(--text-primary);}
+  .explic-body{padding:0 12px 12px;font-size:13px;color:var(--text-secondary);line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Simulador de Valor Tiempo del Dinero</h1>
+    <p>Herramienta educativa — interés simple/compuesto, anualidades, tasas y amortización de préstamos</p>
+  </header>
+
+  <div class="card">
+    <h2 class="sr-only">Simulador de valor tiempo del dinero, con pestañas para capital único, anualidades, conversión de tasas y amortización de préstamos</h2>
+
+    <div style="display:flex;gap:4px;overflow-x:auto;margin-bottom:1rem;border-bottom:0.5px solid var(--border);padding-bottom:0;">
+      <button class="tab-btn active" data-tab="capital" style="border:none;border-bottom:2px solid var(--text-primary);border-radius:0;background:transparent;padding:8px 10px;font-size:13px;white-space:nowrap;">Capital único</button>
+      <button class="tab-btn" data-tab="anualidad" style="border:none;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:8px 10px;font-size:13px;white-space:nowrap;color:var(--text-secondary);">Anualidades</button>
+      <button class="tab-btn" data-tab="tasas" style="border:none;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:8px 10px;font-size:13px;white-space:nowrap;color:var(--text-secondary);">Tasas</button>
+      <button class="tab-btn" data-tab="amort" style="border:none;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:8px 10px;font-size:13px;white-space:nowrap;color:var(--text-secondary);">Amortización</button>
+    </div>
+
+    <div id="panel-capital" class="panel">
+      <div class="ejemplos-row">
+        <button class="btn-sm" onclick="cargarEjemploCapital('plazofijo')">Ej: Plazo fijo</button>
+        <button class="btn-sm" onclick="cargarEjemploCapital('ahorro')">Ej: Ahorro p/viaje</button>
+        <button class="btn-sm" onclick="resetCapital()" style="margin-left:auto;">Resetear</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div><label style="font-size:12px;color:var(--text-secondary);">Capital inicial ($)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Monto de dinero en el momento inicial (VP) o el que se busca proyectar (si se calcula VP a partir de un VF).</span></span></label><input type="number" id="c-capital" value="100000" style="width:100%;"></div>
+        <div><label style="font-size:12px;color:var(--text-secondary);">Tasa por período (%)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Tasa de interés que corresponde a cada período elegido abajo. Si el período es un año, es una tasa anual.</span></span></label><input type="number" id="c-tasa" value="40" step="0.1" style="width:100%;"></div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:12px;color:var(--text-secondary);">Cantidad de períodos<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Un período es la unidad de tiempo entre capitalizaciones (puede ser un año, un mes, etc). Debe coincidir con la unidad de la tasa.</span></span></label>
+        <div style="display:flex;align-items:center;gap:10px;"><input type="range" id="c-anios" min="1" max="20" value="5" style="flex:1;"><span id="c-anios-out" style="min-width:20px;font-size:13px;font-weight:500;">5</span></div>
+      </div>
+      <div id="c-warn" class="warn-box">⚠️ Recordá: la tasa debe estar expresada en la misma unidad de tiempo que el período (ej: si contás en meses, usá tasa mensual, no anual).</div>
+      <div style="display:flex;gap:16px;margin-bottom:12px;">
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="c-modo" value="vf" checked>Calcular VF</label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="c-modo" value="vp">Calcular VP</label>
+      </div>
+      <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">Interés simple</p><p id="c-res-simple" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">Interés compuesto</p><p id="c-res-compuesto" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+      </div>
+      <div style="border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;">
+        <p style="font-size:12px;color:var(--text-secondary);margin:0 0 6px;">Fórmula aplicada (compuesto)</p>
+        <p id="c-formula" style="font-size:13px;font-family:var(--font-mono);margin:0;word-break:break-word;"></p>
+      </div>
+      <div style="position:relative;height:240px;margin-bottom:16px;"><canvas id="c-chart" role="img" aria-label="Comparación de crecimiento del capital con interés simple vs compuesto"></canvas></div>
+
+      <details class="explic">
+        <summary>¿Qué significa esto?</summary>
+        <div class="explic-body">
+          Con <strong>interés simple</strong>, los intereses se calculan siempre sobre el capital original — no se acumulan sobre sí mismos. Por eso el capital crece en línea recta (siempre suma lo mismo cada período).<br><br>
+          Con <strong>interés compuesto</strong>, cada período los intereses generados se suman al capital, y el período siguiente se cobra interés también sobre esos intereses ("interés sobre interés"). Por eso el crecimiento es una curva, no una recta: cuanto más tiempo pasa, más rápido crece.<br><br>
+          En la vida real, casi todo (plazos fijos, préstamos, inversiones a más de un período) funciona con interés compuesto. El simple aparece sobre todo en operaciones muy cortas o en ejercicios introductorios.
+        </div>
+      </details>
+    </div>
+
+    <div id="panel-anualidad" class="panel" style="display:none;">
+      <div class="ejemplos-row">
+        <button class="btn-sm" onclick="cargarEjemploAnualidad('alquiler')">Ej: Ahorro mensual</button>
+        <button class="btn-sm" onclick="cargarEjemploAnualidad('jubilacion')">Ej: Aporte a 5 años</button>
+        <button class="btn-sm" onclick="resetAnualidad()" style="margin-left:auto;">Resetear</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div><label style="font-size:12px;color:var(--text-secondary);">Cuota periódica ($)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Monto fijo que se paga o cobra en cada período de la anualidad.</span></span></label><input type="number" id="a-cuota" value="10000" style="width:100%;"></div>
+        <div><label style="font-size:12px;color:var(--text-secondary);">Tasa por período (%)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Debe estar en la misma unidad de tiempo que los períodos de la cuota (ej: si la cuota es mensual, la tasa debe ser mensual).</span></span></label><input type="number" id="a-tasa" value="5" step="0.1" style="width:100%;"></div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:12px;color:var(--text-secondary);">Cantidad de períodos</label>
+        <div style="display:flex;align-items:center;gap:10px;"><input type="range" id="a-n" min="1" max="60" value="12" style="flex:1;"><span id="a-n-out" style="min-width:24px;font-size:13px;font-weight:500;">12</span></div>
+      </div>
+      <div id="a-warn" class="warn-box">⚠️ Recordá: la tasa y la frecuencia de la cuota tienen que estar en la misma unidad de tiempo (ambas mensuales, ambas anuales, etc).</div>
+      <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">Valor futuro (VF)</p><p id="a-vf" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">Valor presente (VP)</p><p id="a-vp" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+      </div>
+      <div style="border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;">
+        <p style="font-size:12px;color:var(--text-secondary);margin:0 0 6px;">Fórmulas aplicadas</p>
+        <p id="a-formula-vf" style="font-size:13px;font-family:var(--font-mono);margin:0 0 6px;word-break:break-word;"></p>
+        <p id="a-formula-vp" style="font-size:13px;font-family:var(--font-mono);margin:0;word-break:break-word;"></p>
+      </div>
+      <div style="position:relative;height:240px;"><canvas id="a-chart" role="img" aria-label="Crecimiento del valor futuro acumulado de la anualidad por período"></canvas></div>
+    </div>
+
+    <div id="panel-tasas" class="panel" style="display:none;">
+      <div class="ejemplos-row">
+        <button class="btn-sm" onclick="cargarEjemploTasas('tarjeta')">Ej: Tarjeta de crédito</button>
+        <button class="btn-sm" onclick="cargarEjemploTasas('plazofijo')">Ej: Plazo fijo bancario</button>
+        <button class="btn-sm" onclick="resetTasas()" style="margin-left:auto;">Resetear</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div><label style="font-size:12px;color:var(--text-secondary);">TNA (%)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Tasa nominal anual: la tasa "de etiqueta", sin considerar el efecto de la capitalización dentro del año.</span></span></label><input type="number" id="t-tna" value="60" step="0.1" style="width:100%;"></div>
+        <div><label style="font-size:12px;color:var(--text-secondary);">Capitalizaciones al año<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Cuántas veces por año se capitaliza el interés (12 = mensual, 4 = trimestral, 365 = diaria, etc).</span></span></label><input type="number" id="t-m" value="12" min="1" style="width:100%;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--surface-1);border-radius:var(--radius);padding:1rem;margin-bottom:12px;">
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">Tasa efectiva anual (TEA)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">La tasa real que se gana o paga en un año, ya con el efecto de la capitalización incluido.</span></span></p><p id="t-tea" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">Tasa efectiva mensual (TEM)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Equivalente mensual de la TEA. Muy usada en Argentina para comparar plazos fijos, tarjetas y préstamos cotizados mes a mes.</span></span></p><p id="t-tem" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+      </div>
+      <div style="border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;">
+        <p style="font-size:12px;color:var(--text-secondary);margin:0 0 6px;">Fórmulas aplicadas</p>
+        <p id="t-formula" style="font-size:13px;font-family:var(--font-mono);margin:0 0 6px;word-break:break-word;"></p>
+        <p id="t-formula-tem" style="font-size:13px;font-family:var(--font-mono);margin:0;word-break:break-word;"></p>
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">TEA según capitalizaciones (misma TNA)</p>
+      <div style="position:relative;height:240px;"><canvas id="t-chart" role="img" aria-label="Comparación de la TEA resultante según distintas frecuencias de capitalización"></canvas></div>
+    </div>
+
+    <div id="panel-amort" class="panel" style="display:none;">
+      <div class="ejemplos-row">
+        <button class="btn-sm" onclick="cargarEjemploAmort('hipotecario')">Ej: Préstamo hipotecario</button>
+        <button class="btn-sm" onclick="cargarEjemploAmort('personal')">Ej: Préstamo personal</button>
+        <button class="btn-sm" onclick="resetAmort()" style="margin-left:auto;">Resetear</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div><label style="font-size:12px;color:var(--text-secondary);">Monto del préstamo ($)</label><input type="number" id="m-monto" value="500000" style="width:100%;"></div>
+        <div><label style="font-size:12px;color:var(--text-secondary);">Tasa por período (%)</label><input type="number" id="m-tasa" value="4" step="0.1" style="width:100%;"></div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:12px;color:var(--text-secondary);">Cantidad de cuotas</label>
+        <div style="display:flex;align-items:center;gap:10px;"><input type="range" id="m-n" min="1" max="48" value="12" style="flex:1;"><span id="m-n-out" style="min-width:24px;font-size:13px;font-weight:500;">12</span></div>
+      </div>
+      <div id="m-warn" class="warn-box">⚠️ Recordá: la tasa por período y la frecuencia de las cuotas deben coincidir (ej: cuotas mensuales necesitan tasa mensual).</div>
+      <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;">
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="m-sistema" value="frances" checked>Francés<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Cuota total fija en todos los períodos. La composición interés/amortización varía: al principio se paga más interés, al final más capital.</span></span></label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="m-sistema" value="aleman">Alemán<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Amortización de capital fija en todos los períodos. La cuota total es decreciente porque el interés baja con el saldo.</span></span></label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="m-sistema" value="americano">Americano<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Solo se pagan intereses en cada período; el capital se devuelve entero en la última cuota.</span></span></label>
+      </div>
+      <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;margin-bottom:12px;">
+        <p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;" id="m-cuota-label">Cuota fija</p>
+        <p id="m-cuota" style="font-size:20px;font-weight:500;margin:0;">-</p>
+      </div>
+      <div style="position:relative;height:240px;margin-bottom:16px;"><canvas id="m-chart" role="img" aria-label="Composición de interés y amortización por cuota"></canvas></div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;font-size:11px;border-collapse:collapse;min-width:400px;">
+          <thead><tr style="border-bottom:0.5px solid var(--border);">
+            <th style="text-align:left;padding:6px 4px;color:var(--text-secondary);">Cuota</th>
+            <th style="text-align:right;padding:6px 4px;color:var(--text-secondary);">Interés</th>
+            <th style="text-align:right;padding:6px 4px;color:var(--text-secondary);">Amort.</th>
+            <th style="text-align:right;padding:6px 4px;color:var(--text-secondary);">Cuota</th>
+            <th style="text-align:right;padding:6px 4px;color:var(--text-secondary);">Saldo</th>
+          </tr></thead>
+          <tbody id="m-tabla"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>Herramienta educativa de valor tiempo del dinero — de uso libre para fines de enseñanza.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+function fmt(n){ if(!isFinite(n)) return '-'; return '$' + n.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtPct(n){ return n.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%'; }
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.style.borderBottomColor='transparent'; b.style.color='var(--text-secondary)'; });
+    btn.classList.add('active'); btn.style.borderBottomColor='var(--text-primary)'; btn.style.color='var(--text-primary)';
+    document.querySelectorAll('.panel').forEach(p => p.style.display='none');
+    document.getElementById('panel-' + btn.dataset.tab).style.display='block';
+  });
+});
+
+let charts = {};
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); } }
+
+// --- Capital único ---
+function calcCapital(){
+  const capital = parseFloat(document.getElementById('c-capital').value) || 0;
+  const tasaInput = parseFloat(document.getElementById('c-tasa').value) || 0;
+  const tasa = tasaInput / 100;
+  const periodos = parseInt(document.getElementById('c-anios').value);
+  const modo = document.querySelector('input[name="c-modo"]:checked').value;
+  document.getElementById('c-anios-out').textContent = periodos;
+  document.getElementById('c-warn').style.display = (tasaInput > 15 && periodos > 10) ? 'block' : 'none';
+
+  let simple, compuesto, formula;
+  if(modo === 'vf'){
+    simple = capital * (1 + tasa*periodos);
+    compuesto = capital * Math.pow(1+tasa, periodos);
+    formula = `VF = ${capital.toLocaleString('es-AR')} × (1 + ${tasa})^${periodos} = ${fmt(compuesto)}`;
+  } else {
+    simple = capital / (1 + tasa*periodos);
+    compuesto = capital / Math.pow(1+tasa, periodos);
+    formula = `VP = ${capital.toLocaleString('es-AR')} / (1 + ${tasa})^${periodos} = ${fmt(compuesto)}`;
+  }
+  document.getElementById('c-res-simple').textContent = fmt(simple);
+  document.getElementById('c-res-compuesto').textContent = fmt(compuesto);
+  document.getElementById('c-formula').textContent = formula;
+
+  const labels = Array.from({length: periodos+1}, (_,i)=>i);
+  const simpleSeries = labels.map(p => modo==='vf' ? capital*(1+tasa*p) : capital/(1+tasa*p));
+  const compSeries = labels.map(p => modo==='vf' ? capital*Math.pow(1+tasa,p) : capital/Math.pow(1+tasa,p));
+
+  destroyChart('c');
+  charts['c'] = new Chart(document.getElementById('c-chart'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label:'Simple', data: simpleSeries, borderColor:'#2a78d6', backgroundColor:'transparent', borderDash:[5,3], tension:0 },
+      { label:'Compuesto', data: compSeries, borderColor:'#eb6834', backgroundColor:'transparent', tension:0 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true, labels:{boxWidth:10, font:{size:11}}}}, scales:{ x:{title:{display:true,text:'Períodos',font:{size:11}}}, y:{ticks:{callback:v=>'$'+v.toLocaleString('es-AR')}} } }
+  });
+}
+['c-capital','c-tasa','c-anios'].forEach(id => document.getElementById(id).addEventListener('input', calcCapital));
+document.querySelectorAll('input[name="c-modo"]').forEach(r => r.addEventListener('change', calcCapital));
+function cargarEjemploCapital(tipo){
+  if(tipo==='plazofijo'){ document.getElementById('c-capital').value=100000; document.getElementById('c-tasa').value=3.5; document.getElementById('c-anios').value=1; document.querySelector('input[name="c-modo"][value="vf"]').checked=true; }
+  if(tipo==='ahorro'){ document.getElementById('c-capital').value=300000; document.getElementById('c-tasa').value=40; document.getElementById('c-anios').value=2; document.querySelector('input[name="c-modo"][value="vf"]').checked=true; }
+  calcCapital();
+}
+function resetCapital(){ document.getElementById('c-capital').value=100000; document.getElementById('c-tasa').value=40; document.getElementById('c-anios').value=5; document.querySelector('input[name="c-modo"][value="vf"]').checked=true; calcCapital(); }
+
+// --- Anualidades ---
+function calcAnualidad(){
+  const cuota = parseFloat(document.getElementById('a-cuota').value) || 0;
+  const tasaInput = parseFloat(document.getElementById('a-tasa').value) || 0;
+  const tasa = tasaInput / 100;
+  const n = parseInt(document.getElementById('a-n').value);
+  document.getElementById('a-n-out').textContent = n;
+  document.getElementById('a-warn').style.display = (tasaInput > 15 && n > 24) ? 'block' : 'none';
+
+  const vf = tasa===0 ? cuota*n : cuota * ((Math.pow(1+tasa,n)-1)/tasa);
+  const vp = tasa===0 ? cuota*n : cuota * ((1-Math.pow(1+tasa,-n))/tasa);
+
+  document.getElementById('a-vf').textContent = fmt(vf);
+  document.getElementById('a-vp').textContent = fmt(vp);
+  document.getElementById('a-formula-vf').textContent = `VF = ${cuota.toLocaleString('es-AR')} × [(1+${tasa})^${n} - 1] / ${tasa} = ${fmt(vf)}`;
+  document.getElementById('a-formula-vp').textContent = `VP = ${cuota.toLocaleString('es-AR')} × [1 - (1+${tasa})^-${n}] / ${tasa} = ${fmt(vp)}`;
+
+  const labels = Array.from({length:n+1}, (_,i)=>i);
+  const vfSeries = labels.map(p => tasa===0 ? cuota*p : cuota*((Math.pow(1+tasa,p)-1)/tasa));
+
+  destroyChart('a');
+  charts['a'] = new Chart(document.getElementById('a-chart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'VF acumulado', data: vfSeries, backgroundColor:'#1baf7a', borderRadius:4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{title:{display:true,text:'Período',font:{size:11}}}, y:{ticks:{callback:v=>'$'+v.toLocaleString('es-AR')}} } }
+  });
+}
+['a-cuota','a-tasa','a-n'].forEach(id => document.getElementById(id).addEventListener('input', calcAnualidad));
+function cargarEjemploAnualidad(tipo){
+  if(tipo==='alquiler'){ document.getElementById('a-cuota').value=15000; document.getElementById('a-tasa').value=3; document.getElementById('a-n').value=24; }
+  if(tipo==='jubilacion'){ document.getElementById('a-cuota').value=8000; document.getElementById('a-tasa').value=2.5; document.getElementById('a-n').value=60; }
+  calcAnualidad();
+}
+function resetAnualidad(){ document.getElementById('a-cuota').value=10000; document.getElementById('a-tasa').value=5; document.getElementById('a-n').value=12; calcAnualidad(); }
+
+// --- Tasas ---
+function calcTasas(){
+  const tna = (parseFloat(document.getElementById('t-tna').value) || 0) / 100;
+  const m = parseInt(document.getElementById('t-m').value) || 1;
+  const tea = Math.pow(1 + tna/m, m) - 1;
+  const tem = Math.pow(1+tea, 1/12) - 1;
+  document.getElementById('t-tea').textContent = fmtPct(tea*100);
+  document.getElementById('t-tem').textContent = fmtPct(tem*100);
+  document.getElementById('t-formula').textContent = `TEA = (1 + ${tna}/${m})^${m} - 1 = ${fmtPct(tea*100)}`;
+  document.getElementById('t-formula-tem').textContent = `TEM = (1 + TEA)^(1/12) - 1 = ${fmtPct(tem*100)}`;
+
+  const caps = [1,2,4,6,12,52,365];
+  const teaSeries = caps.map(c => (Math.pow(1+tna/c,c)-1)*100);
+
+  destroyChart('t');
+  charts['t'] = new Chart(document.getElementById('t-chart'), {
+    type: 'line',
+    data: { labels: caps.map(c=>c+'x/año'), datasets: [{ label:'TEA', data: teaSeries, borderColor:'#6250d6', backgroundColor:'transparent', tension:0.2, pointRadius:4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{callback:v=>v.toFixed(1)+'%'}} } }
+  });
+}
+['t-tna','t-m'].forEach(id => document.getElementById(id).addEventListener('input', calcTasas));
+function cargarEjemploTasas(tipo){
+  if(tipo==='tarjeta'){ document.getElementById('t-tna').value=110; document.getElementById('t-m').value=12; }
+  if(tipo==='plazofijo'){ document.getElementById('t-tna').value=38; document.getElementById('t-m').value=12; }
+  calcTasas();
+}
+function resetTasas(){ document.getElementById('t-tna').value=60; document.getElementById('t-m').value=12; calcTasas(); }
+
+// --- Amortización ---
+function calcAmort(){
+  const monto = parseFloat(document.getElementById('m-monto').value) || 0;
+  const tasaInput = parseFloat(document.getElementById('m-tasa').value) || 0;
+  const tasa = tasaInput / 100;
+  const n = parseInt(document.getElementById('m-n').value);
+  const sistema = document.querySelector('input[name="m-sistema"]:checked').value;
+  document.getElementById('m-n-out').textContent = n;
+  document.getElementById('m-warn').style.display = (tasaInput > 15 && n > 24) ? 'block' : 'none';
+
+  let filas = [];
+  let saldo = monto;
+  if(sistema === 'frances'){
+    const cuotaFija = tasa===0 ? monto/n : monto * (tasa*Math.pow(1+tasa,n)) / (Math.pow(1+tasa,n)-1);
+    document.getElementById('m-cuota-label').textContent = 'Cuota fija';
+    document.getElementById('m-cuota').textContent = fmt(cuotaFija);
+    for(let i=1;i<=n;i++){
+      const interes = saldo*tasa;
+      const amort = cuotaFija - interes;
+      saldo -= amort;
+      filas.push({cuota:i, interes, amort, cuotaTotal:cuotaFija, saldo: Math.max(saldo,0)});
+    }
+  } else if(sistema === 'aleman'){
+    const amortFija = monto/n;
+    document.getElementById('m-cuota-label').textContent = 'Amortización fija (cuota es decreciente)';
+    document.getElementById('m-cuota').textContent = fmt(amortFija) + ' /período';
+    for(let i=1;i<=n;i++){
+      const interes = saldo*tasa;
+      const cuotaTotal = amortFija + interes;
+      saldo -= amortFija;
+      filas.push({cuota:i, interes, amort:amortFija, cuotaTotal, saldo: Math.max(saldo,0)});
+    }
+  } else {
+    const interesFijo = monto*tasa;
+    document.getElementById('m-cuota-label').textContent = 'Interés por período (capital se paga al final)';
+    document.getElementById('m-cuota').textContent = fmt(interesFijo) + ' /período';
+    for(let i=1;i<=n;i++){
+      const interes = interesFijo;
+      const amort = i===n ? monto : 0;
+      const cuotaTotal = interes + amort;
+      saldo = i===n ? 0 : monto;
+      filas.push({cuota:i, interes, amort, cuotaTotal, saldo});
+    }
+  }
+
+  const tbody = document.getElementById('m-tabla');
+  tbody.innerHTML = filas.map(f => `<tr style="border-bottom:0.5px solid var(--border);">
+    <td style="padding:5px 4px;">${f.cuota}</td>
+    <td style="text-align:right;padding:5px 4px;">${fmt(f.interes)}</td>
+    <td style="text-align:right;padding:5px 4px;">${fmt(f.amort)}</td>
+    <td style="text-align:right;padding:5px 4px;">${fmt(f.cuotaTotal)}</td>
+    <td style="text-align:right;padding:5px 4px;">${fmt(f.saldo)}</td>
+  </tr>`).join('');
+
+  destroyChart('m');
+  charts['m'] = new Chart(document.getElementById('m-chart'), {
+    type: 'bar',
+    data: { labels: filas.map(f=>f.cuota), datasets: [
+      { label:'Interés', data: filas.map(f=>f.interes), backgroundColor:'#e34948', stack:'s' },
+      { label:'Amortización', data: filas.map(f=>f.amort), backgroundColor:'#2a78d6', stack:'s' }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true, labels:{boxWidth:10, font:{size:11}}}}, scales:{ x:{stacked:true, title:{display:true,text:'Cuota',font:{size:11}}}, y:{stacked:true, ticks:{callback:v=>'$'+v.toLocaleString('es-AR')}} } }
+  });
+}
+['m-monto','m-tasa','m-n'].forEach(id => document.getElementById(id).addEventListener('input', calcAmort));
+document.querySelectorAll('input[name="m-sistema"]').forEach(r => r.addEventListener('change', calcAmort));
+function cargarEjemploAmort(tipo){
+  if(tipo==='hipotecario'){ document.getElementById('m-monto').value=20000000; document.getElementById('m-tasa').value=1.2; document.getElementById('m-n').value=48; document.querySelector('input[name="m-sistema"][value="frances"]').checked=true; }
+  if(tipo==='personal'){ document.getElementById('m-monto').value=800000; document.getElementById('m-tasa').value=6; document.getElementById('m-n').value=18; document.querySelector('input[name="m-sistema"][value="frances"]').checked=true; }
+  calcAmort();
+}
+function resetAmort(){ document.getElementById('m-monto').value=500000; document.getElementById('m-tasa').value=4; document.getElementById('m-n').value=12; document.querySelector('input[name="m-sistema"][value="frances"]').checked=true; calcAmort(); }
+
+calcCapital(); calcAnualidad(); calcTasas(); calcAmort();
+</script>
+</body>
+</html>
