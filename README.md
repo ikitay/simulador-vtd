@@ -2,7 +2,7 @@
 
 Herramienta educativa interactiva para la enseñanza de finanzas / economía a nivel universitario básico. Permite explorar de forma práctica los conceptos centrales del valor tiempo del dinero.
 
-**[Ver demo en vivo]([https://TU-USUARIO.github.io/TU-REPO/](https://ikitay.github.io/simulador-vtd/))**
+**[Ver demo en vivo](https://ikitay.github.io/simulador-vtd/)**
 
 ## Guía de uso para estudiantes
 
@@ -28,7 +28,7 @@ Cada pestaña incluye:
 
 ## Uso
 
-Es un único archivo HTML autocontenido (`index.html`), sin backend ni dependencias de instalación. La única dependencia externa es [Chart.js](https://www.chartjs.org/), cargada desde CDN.
+Es una página estática (`index.html`), sin backend ni dependencias de instalación. La única dependencia externa es [Chart.js](https://www.chartjs.org/), cargada desde CDN. La pestaña "Contado vs. Cuotas" lee `data/rem.json`, un archivo estático que un GitHub Action actualiza automáticamente todos los días (no hay llamadas del navegador a APIs externas).
 
 ## Personalización
 
