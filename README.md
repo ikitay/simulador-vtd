@@ -10,12 +10,13 @@ En `docs/guia-simulador-vtd.docx` hay una guía de lectura (sin ejercicios) pens
 
 ## Contenido
 
-La herramienta está organizada en 4 pestañas:
+La herramienta está organizada en 5 pestañas:
 
 1. **Capital único** — Valor futuro (VF) y valor presente (VP) de un capital, comparando interés simple vs compuesto. Incluye gráfico comparativo y explicación conceptual.
 2. **Anualidades** — VF y VP de una serie de cuotas periódicas iguales.
 3. **Tasas** — Conversión de tasa nominal anual (TNA) a tasa efectiva anual (TEA) y mensual (TEM), con gráfico de sensibilidad según la frecuencia de capitalización.
 4. **Amortización de préstamos** — Sistemas francés (cuota fija), alemán (amortización fija) y americano (interés periódico + capital al final), con tabla de cuotas y gráfico de composición interés/amortización.
+5. **Contado vs. Cuotas** — Compara pagar de contado contra financiar en cuotas, descontando el flujo de cuotas a valor presente. Modo simple (usa la inflación esperada REM próximos 12 meses como tasa de descuento) y modo avanzado (tasa de descuento elegida por el usuario, más el Costo Financiero Total implícito de las cuotas). El dato de inflación esperada se actualiza automáticamente todos los días vía GitHub Actions (ver `scripts/actualizar-rem.mjs`), leyendo la serie "REM próximos 12 meses" del BCRA y guardándola en `data/rem.json`; si el dato no está disponible o está desactualizado, la calculadora avisa y cae a modo de tasa manual.
 
 Cada pestaña incluye:
 - Tooltips (ⓘ) con explicaciones conceptuales de cada variable

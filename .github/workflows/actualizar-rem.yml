@@ -1,0 +1,30 @@
+name: Actualizar REM
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Actualizar data/rem.json
+        run: node scripts/actualizar-rem.mjs
+
+      - name: Commitear si hay cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/rem.json
+          git diff --staged --quiet || git commit -m "Actualizar expectativa de inflación REM"
+          git push

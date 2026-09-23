@@ -72,6 +72,7 @@
       <button class="tab-btn" data-tab="anualidad" style="border:none;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:8px 10px;font-size:13px;white-space:nowrap;color:var(--text-secondary);">Anualidades</button>
       <button class="tab-btn" data-tab="tasas" style="border:none;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:8px 10px;font-size:13px;white-space:nowrap;color:var(--text-secondary);">Tasas</button>
       <button class="tab-btn" data-tab="amort" style="border:none;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:8px 10px;font-size:13px;white-space:nowrap;color:var(--text-secondary);">Amortización</button>
+      <button class="tab-btn" data-tab="contado-cuotas" style="border:none;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:8px 10px;font-size:13px;white-space:nowrap;color:var(--text-secondary);">Contado vs. Cuotas</button>
     </div>
 
     <div id="panel-capital" class="panel">
@@ -200,6 +201,73 @@
           <tbody id="m-tabla"></tbody>
         </table>
       </div>
+    </div>
+
+    <div id="panel-contado-cuotas" class="panel" style="display:none;">
+      <div class="ejemplos-row">
+        <button class="btn-sm" onclick="cargarEjemploCC('electro')">Ej: Electrodoméstico</button>
+        <button class="btn-sm" onclick="cargarEjemploCC('viaje')">Ej: Viaje en cuotas</button>
+        <button class="btn-sm" onclick="resetCC()" style="margin-left:auto;">Resetear</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div><label style="font-size:12px;color:var(--text-secondary);">Precio de contado ($)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Precio si pagás todo hoy, de una sola vez.</span></span></label><input type="number" id="cc-contado" value="100000" style="width:100%;"></div>
+        <div><label style="font-size:12px;color:var(--text-secondary);">Precio total en cuotas ($)<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Suma de todas las cuotas (no el valor de una sola cuota). Se asume que las cuotas son iguales entre sí.</span></span></label><input type="number" id="cc-total" value="130000" style="width:100%;"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--text-secondary);">Cantidad de cuotas<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Cantidad de pagos mensuales iguales en los que se divide el precio total en cuotas.</span></span></label>
+        <div style="display:flex;align-items:center;gap:10px;"><input type="range" id="cc-n" min="1" max="24" value="12" style="flex:1;"><span id="cc-n-out" style="min-width:20px;font-size:13px;font-weight:500;">12</span></div>
+      </div>
+
+      <div style="display:flex;gap:16px;margin-bottom:12px;">
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="cc-modo" value="simple" checked>Simple</label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="cc-modo" value="avanzado">Avanzado</label>
+      </div>
+
+      <div id="cc-avanzado-opts" style="display:none;margin-bottom:12px;">
+        <div style="display:flex;gap:16px;margin-bottom:8px;">
+          <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="cc-fuente" value="rem" checked>Inflación esperada (REM)</label>
+          <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="radio" name="cc-fuente" value="manual">Tasa manual</label>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary);margin:0;line-height:1.5;">
+          Acá elegís vos la tasa de descuento en lugar de asumir que tu costo de oportunidad es igual a la inflación esperada. También se muestra el Costo Financiero Total (CFT) implícito de las cuotas, para compararlo contra la tasa que elijas.
+        </p>
+      </div>
+
+      <div id="cc-warn-rem" class="warn-box">⚠️ No se pudo obtener el dato automático de inflación esperada (REM). Ingresá una tasa manualmente para continuar.</div>
+
+      <div id="cc-manual-opts" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div><label style="font-size:12px;color:var(--text-secondary);">Tasa (%)</label><input type="number" id="cc-tasa-manual" value="5" step="0.1" style="width:100%;"></div>
+        <div><label style="font-size:12px;color:var(--text-secondary);">Unidad</label><select id="cc-tasa-manual-unidad" style="width:100%;padding:8px 10px;border:0.5px solid var(--border-strong);border-radius:var(--radius);font-size:14px;background:var(--surface-0);color:var(--text-primary);"><option value="mensual">Mensual</option><option value="anual">Anual (efectiva)</option></select></div>
+      </div>
+
+      <div id="cc-rem-info" style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;"></div>
+
+      <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">Precio de contado</p><p id="cc-res-contado" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">Valor presente de las cuotas</p><p id="cc-res-vp" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+      </div>
+
+      <div id="cc-recomendacion" style="border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:12px;margin-bottom:12px;font-size:14px;font-weight:500;"></div>
+
+      <div id="cc-cft-box" style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;display:none;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">CFT mensual<span class="tip" tabindex="0"><i aria-hidden="true">i</i><span class="tip-box">Costo Financiero Total: la tasa mensual que hace que el precio de contado equivalga exactamente al flujo de cuotas (la TIR de esa comparación).</span></span></p><p id="cc-cft-mensual" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+        <div><p style="font-size:12px;color:var(--text-secondary);margin:0 0 4px;">CFT anualizado (TEA)</p><p id="cc-cft-anual" style="font-size:20px;font-weight:500;margin:0;">-</p></div>
+      </div>
+
+      <div style="border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;">
+        <p style="font-size:12px;color:var(--text-secondary);margin:0 0 6px;">Fórmula aplicada</p>
+        <p id="cc-formula" style="font-size:13px;font-family:var(--font-mono);margin:0;word-break:break-word;"></p>
+      </div>
+      <div style="position:relative;height:240px;margin-bottom:16px;"><canvas id="cc-chart" role="img" aria-label="Comparación entre el precio de contado y el valor presente de las cuotas"></canvas></div>
+
+      <details class="explic">
+        <summary>¿Qué significa esto?</summary>
+        <div class="explic-body">
+          Comparar "pagar de contado" contra "pagar en cuotas" no es solo una cuenta de sumar: un peso hoy vale más que un peso dentro de seis meses, porque mientras tanto ese peso podría invertirse. Por eso hay que traer las cuotas futuras a valor presente antes de compararlas contra el precio de contado.<br><br>
+          En el <strong>modo simple</strong> se usa la inflación esperada (REM, próximos 12 meses) como tasa de descuento — es decir, se asume que tu costo de oportunidad del dinero es igual a la inflación esperada. Es una simplificación habitual, pero no es del todo correcta: tu costo de oportunidad real depende de en qué podrías invertir ese dinero (un plazo fijo, un fondo money market, etc.), que no tiene por qué coincidir con la inflación esperada.<br><br>
+          En el <strong>modo avanzado</strong> podés elegir vos esa tasa de descuento, y además ver el <strong>Costo Financiero Total (CFT)</strong> implícito: la tasa que hace que el precio de contado sea exactamente equivalente al flujo de cuotas. Comparando el CFT contra la tasa que elegiste, podés decidir de forma más precisa si conviene financiar la compra.
+        </div>
+      </details>
     </div>
   </div>
 
@@ -407,7 +475,155 @@ function cargarEjemploAmort(tipo){
 }
 function resetAmort(){ document.getElementById('m-monto').value=500000; document.getElementById('m-tasa').value=4; document.getElementById('m-n').value=12; document.querySelector('input[name="m-sistema"][value="frances"]').checked=true; calcAmort(); }
 
-calcCapital(); calcAnualidad(); calcTasas(); calcAmort();
+// --- Contado vs. Cuotas ---
+let remData = null;
+let remStatus = 'error'; // 'ok' | 'stale' | 'error'
+
+async function cargarRem(){
+  try{
+    const res = await fetch('data/rem.json', {cache:'no-store'});
+    if(!res.ok) throw new Error('status ' + res.status);
+    const json = await res.json();
+    const dias = (Date.now() - new Date(json.fecha_actualizacion).getTime()) / 86400000;
+    remData = json;
+    remStatus = dias > 40 ? 'stale' : 'ok';
+  } catch(e){
+    remData = null;
+    remStatus = 'error';
+  }
+  calcCC();
+}
+
+function actualizarVisibilidadCC(){
+  const modo = document.querySelector('input[name="cc-modo"]:checked').value;
+  document.getElementById('cc-avanzado-opts').style.display = modo === 'avanzado' ? 'block' : 'none';
+  document.getElementById('cc-cft-box').style.display = modo === 'avanzado' ? 'grid' : 'none';
+
+  const warn = document.getElementById('cc-warn-rem');
+  const remRadio = document.querySelector('input[name="cc-fuente"][value="rem"]');
+  if(remStatus === 'ok'){
+    warn.style.display = 'none';
+    remRadio.disabled = false;
+  } else {
+    warn.textContent = remStatus === 'stale'
+      ? '⚠️ El dato automático de inflación esperada (REM) está desactualizado (hace más de 40 días que no se actualiza). Ingresá una tasa manualmente para continuar.'
+      : '⚠️ No se pudo obtener el dato automático de inflación esperada (REM). Ingresá una tasa manualmente para continuar.';
+    warn.style.display = 'block';
+    remRadio.disabled = true;
+    remRadio.checked = false;
+    document.querySelector('input[name="cc-fuente"][value="manual"]').checked = true;
+  }
+
+  const fuenteElegida = document.querySelector('input[name="cc-fuente"]:checked').value;
+  const usarManual = remStatus !== 'ok' || (modo === 'avanzado' && fuenteElegida === 'manual');
+  document.getElementById('cc-manual-opts').style.display = usarManual ? 'grid' : 'none';
+}
+
+function resolverTasaMensualCC(){
+  const modo = document.querySelector('input[name="cc-modo"]:checked').value;
+  const fuenteElegida = document.querySelector('input[name="cc-fuente"]:checked').value;
+  const usarManual = remStatus !== 'ok' || (modo === 'avanzado' && fuenteElegida === 'manual');
+
+  if(usarManual){
+    const valor = parseFloat(document.getElementById('cc-tasa-manual').value) || 0;
+    const unidad = document.getElementById('cc-tasa-manual-unidad').value;
+    const tasaMensual = unidad === 'anual' ? Math.pow(1 + valor/100, 1/12) - 1 : valor/100;
+    const texto = `Tasa de descuento: ${valor.toLocaleString('es-AR')}% ${unidad === 'anual' ? 'anual efectiva' : 'mensual'} (ingresada manualmente) → ${fmtPct(tasaMensual*100)} mensual.`;
+    return { tasaMensual, texto };
+  }
+
+  const tasaMensual = Math.pow(1 + remData.valor/100, 1/12) - 1;
+  const fechaFmt = new Date(remData.fecha + 'T00:00:00').toLocaleDateString('es-AR', {year:'numeric', month:'long'});
+  const texto = `Tasa de descuento: inflación esperada REM próximos 12 meses = ${remData.valor.toLocaleString('es-AR')}% i.a. (dato de ${fechaFmt}) → equivalente a ${fmtPct(tasaMensual*100)} mensual.`;
+  return { tasaMensual, texto };
+}
+
+function calcularCFT(contado, cuota, n){
+  if(cuota <= 0 || n <= 0 || contado <= 0) return null;
+  const van = (r) => Math.abs(r) < 1e-9 ? (cuota*n - contado) : (cuota * (1 - Math.pow(1+r, -n)) / r - contado);
+  let lo = -0.99, hi = 10;
+  let vLo = van(lo), vHi = van(hi);
+  if(vLo * vHi > 0) return null;
+  for(let i=0;i<100;i++){
+    const mid = (lo+hi)/2;
+    const vMid = van(mid);
+    if(Math.abs(vMid) < 1e-9) return mid;
+    if((vLo < 0) === (vMid < 0)){ lo = mid; vLo = vMid; } else { hi = mid; }
+  }
+  return (lo+hi)/2;
+}
+
+function calcCC(){
+  const contado = parseFloat(document.getElementById('cc-contado').value) || 0;
+  const total = parseFloat(document.getElementById('cc-total').value) || 0;
+  const n = parseInt(document.getElementById('cc-n').value);
+  document.getElementById('cc-n-out').textContent = n;
+  const cuota = n > 0 ? total / n : 0;
+
+  actualizarVisibilidadCC();
+  const { tasaMensual, texto } = resolverTasaMensualCC();
+  document.getElementById('cc-rem-info').textContent = texto;
+
+  const vpCuotas = Math.abs(tasaMensual) < 1e-9 ? cuota*n : cuota * (1 - Math.pow(1+tasaMensual, -n)) / tasaMensual;
+
+  document.getElementById('cc-res-contado').textContent = fmt(contado);
+  document.getElementById('cc-res-vp').textContent = fmt(vpCuotas);
+
+  const diferencia = contado - vpCuotas;
+  const recBox = document.getElementById('cc-recomendacion');
+  if(Math.abs(diferencia) < 1){
+    recBox.textContent = 'Con estos datos, pagar de contado o en cuotas da prácticamente lo mismo en términos financieros.';
+  } else if(diferencia > 0){
+    recBox.textContent = `Conviene pagar en cuotas: a la tasa de descuento utilizada, el valor presente de las cuotas (${fmt(vpCuotas)}) es ${fmt(diferencia)} menor que el precio de contado (${fmt(contado)}).`;
+  } else {
+    recBox.textContent = `Conviene pagar de contado: el precio de contado (${fmt(contado)}) es ${fmt(-diferencia)} menor que el valor presente de las cuotas a la tasa de descuento utilizada (${fmt(vpCuotas)}).`;
+  }
+
+  document.getElementById('cc-formula').textContent = `VP cuotas = ${fmt(cuota)} × [1 − (1+${tasaMensual.toFixed(4)})^−${n}] / ${tasaMensual.toFixed(4)} = ${fmt(vpCuotas)}`;
+
+  const modo = document.querySelector('input[name="cc-modo"]:checked').value;
+  if(modo === 'avanzado'){
+    const cft = calcularCFT(contado, cuota, n);
+    if(cft === null){
+      document.getElementById('cc-cft-mensual').textContent = 'No calculable';
+      document.getElementById('cc-cft-anual').textContent = 'No calculable';
+    } else {
+      const tea = Math.pow(1+cft, 12) - 1;
+      document.getElementById('cc-cft-mensual').textContent = fmtPct(cft*100);
+      document.getElementById('cc-cft-anual').textContent = fmtPct(tea*100);
+    }
+  }
+
+  destroyChart('cc');
+  charts['cc'] = new Chart(document.getElementById('cc-chart'), {
+    type: 'bar',
+    data: { labels: ['Contado', 'Cuotas (VP)'], datasets: [{ data: [contado, vpCuotas], backgroundColor: ['#2a78d6', '#eb6834'], borderRadius: 4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{callback:v=>'$'+v.toLocaleString('es-AR')}} } }
+  });
+}
+['cc-contado','cc-total','cc-n','cc-tasa-manual'].forEach(id => document.getElementById(id).addEventListener('input', calcCC));
+document.getElementById('cc-tasa-manual-unidad').addEventListener('change', calcCC);
+document.querySelectorAll('input[name="cc-modo"]').forEach(r => r.addEventListener('change', calcCC));
+document.querySelectorAll('input[name="cc-fuente"]').forEach(r => r.addEventListener('change', calcCC));
+
+function cargarEjemploCC(tipo){
+  document.querySelector('input[name="cc-modo"][value="simple"]').checked = true;
+  if(tipo === 'electro'){ document.getElementById('cc-contado').value=250000; document.getElementById('cc-total').value=290000; document.getElementById('cc-n').value=6; }
+  if(tipo === 'viaje'){ document.getElementById('cc-contado').value=800000; document.getElementById('cc-total').value=1050000; document.getElementById('cc-n').value=12; }
+  calcCC();
+}
+function resetCC(){
+  document.getElementById('cc-contado').value=100000;
+  document.getElementById('cc-total').value=130000;
+  document.getElementById('cc-n').value=12;
+  document.querySelector('input[name="cc-modo"][value="simple"]').checked = true;
+  document.querySelector('input[name="cc-fuente"][value="rem"]').checked = true;
+  document.getElementById('cc-tasa-manual').value = 5;
+  document.getElementById('cc-tasa-manual-unidad').value = 'mensual';
+  calcCC();
+}
+
+calcCapital(); calcAnualidad(); calcTasas(); calcAmort(); cargarRem();
 </script>
 </body>
 </html>
