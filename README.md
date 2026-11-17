@@ -40,4 +40,4 @@ Los montos se muestran en formato de pesos argentinos (`$1.234,56`, punto de mil
 
 ## Licencia
 
-De uso libre para fines educativos. Se puede adaptar y redistribuir citando la fuente.
+GPL-3.0. Ver [`LICENSE`](LICENSE). Se puede usar, adaptar y redistribuir, siempre con la misma licencia y citando la fuente.
